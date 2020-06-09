@@ -160,87 +160,77 @@ function mapEarthquakes(data){
 
 }
 
-// function to make additional maptiles
-function mapTiles(){
-  var tiles=[
-    ['Outdoors','mapbox/outdoors-v11', 'green'],
-    ['Satellite','mapbox/satellite-v9', 'orange']
-  ];
-  var baseMaps={};
-  tiles.forEach(tile=> {
-    var name = tile[0];
-    var id= tile[1];
-    var lineColour = tile[2];
+// // function to make additional maptiles
+// function mapTiles(){
+//   var tiles=[
+//     ['Outdoors','mapbox/outdoors-v11', 'green'],
+//     ['Satellite','mapbox/satellite-v9', 'orange']
+//   ];
+//   var baseMaps={};
+//   tiles.forEach(tile=> {
+//     var name = tile[0];
+//     var id= tile[1];
+//     var lineColour = tile[2];
 
-    var tileLayer= L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-      attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-      maxZoom: 18,
-      id: id,
-      accessToken: API_KEY
-      });
+//     var tileLayer= L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+//       attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+//       maxZoom: 18,
+//       id: id,
+//       accessToken: API_KEY
+//       });
   
-    baseMaps[name] = tileLayer;
-     // change boundary colour depending on selected basemap
-    tileLayer.on({
-    add: e => { faultLines.setStyle({color: flColor}) }
-  })
-  })
+//     baseMaps[name] = tileLayer;
+//      // change boundary colour depending on selected basemap
+//     tileLayer.on({
+//     add: e => { faultLines.setStyle({color: flColor}) }
+//   })
+//   })
 
-  return baseMaps;
+//   return baseMaps;
 
-}
+// }
 // function combines all tiles 
-function mapMap() {
+function mapMap(data) {
   // Create the map object with layers
-  var baseMaps = mapTiles();
-
+  // var baseMaps = mapTiles();
+  
   var overlayMaps = {
     'Techtonic Plates': boundaries,
     'Earthquakes' : earthquakes
   };
-
+  
   // Create the map object with layers
   var map = L.map("map", {
     center: [30,-15],
     zoom: 2,
     maxZoom: 18,
-    tileSize: 512,
-    layers: [boundaries, earthquakes, Object.values(baseMaps)[0] ]
+    layers: [boundaries, earthquakes ]
     });
 
+    var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}", {
+      attribution: "Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"http://mapbox.com\">Mapbox</a>",
+      maxZoom: 18,
+      id: "mapbox/light-v10",
+      accessToken: API_KEY
+    }).addTo(map);
   //add legend function to map
   legend.addTo(map);
 
-  L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+  L.control.layers(lightmap, overlayMaps, { collapsed: false }).addTo(map);
     
     // Add interactivity: show/hide the legend with earthquakes layer
     earthquakes.on({
         add: e => { legend.addTo(map) },
         remove: e => { legend.remove() }
     });
+
+    // d3.json("PB2002_boundaries.json",mapBoundaries);
+    
   }
 
 var url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
 var BoundJson="PB2002_boundaries.json"
-// Perform an API call to the earthquake API and call createmap function
-d3.json(url,mapMap)
 
-
-
-d3.json(BoundJson, function(data) {
-  return data;
-}) // First:loading tectonic boundaries data
-   .then(function(data) {
-     console.log(data)});
-  //  } => {
-  //      mapBoundaries(data);
-  //      return d3.json(url); // Second: loading earthquakes data
-  //  })
-  //  .then(data => {
-  //      mapEarthquakes(data);
-  //      createMap();
-  //  })
-  //  .catch(error => {
-  //      console.log(error);
-  //      alert(error);
-  //  });
+d3.json(url, (data) => 
+{ mapMap(data); d3.json(boundJSON, 
+  (boundaries) => { mapBoundaries(boundaries)})});
