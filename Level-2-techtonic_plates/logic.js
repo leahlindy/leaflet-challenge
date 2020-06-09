@@ -3,24 +3,18 @@
 // Create toggle to display techtonic plates
 // Try adding a hover over earthquakes/plates rather than techtonic plates
 // Create layer for techtonic plates boundaries
+
+
+// separate function for earthquake and boundaries - to be added as variables
 var boundaries;
 // plate boundary function will apply style with the json data for boundaries
-function plateBoundaries(data){
+function mapBoundaries(data){
   boundaries = L.geoJSON(data, {
     style: {
         color: 'blue', // base layers can change that
         weight: 2
     }
-});
-}
-
-
-// function to display popup content for each feature 
-// information for each feature within properties
-function popupBox(earthquake) {
-  var properties = earthquake.feature.properties;
-  let date = new Date(properties.time);
-  return `<strong>Magnitude: ${properties.mag}</strong><br><a href="${properties.url}">${properties.place}</a><br>${date.toUTCString()}`;
+  });
 }
 
 // getColor function will get colours for graded magnitudes (1- 5+) - colorbrewer
@@ -33,25 +27,106 @@ function getColor(d) {
          '#800026';
 };
 
-// Info layer- hover over info box rather than popup
-var info = L.control();
-let date = new Date(properties.time);
-info.onAdd = function (map) {
-    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-    this.update();
-    return this._div;
-};
+// // define geojson with listeners for techtonic plates
+// var geojson;
+// // ... our listeners
+// geojson = L.geoJson(boundaries);
+// // call the highlightFeature and reset highlight for interactive mouse-over events
+// function highlightFeature(e) {
+//   var layer = e.target;
 
-// method that we will use to update the control based on feature properties passed
-info.update = function (props) {
-    this._div.innerHTML = '<h4>Earthquake</h4>' +  (props ?
-        '<b>' + props.name + '</b><br />' + props.mag + 'Daily Global Earthquakes'
-        );
-};
+//   layer.setStyle({
+//       weight: 5,
+//       color: '#666',
+//       dashArray: '',
+//       fillOpacity: 0.7
+//   });
 
-info.addTo(map);
+//   if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+//       layer.bringToFront();
+//   }
+// }
+// function resetHighlight(e) {
+//   geojson.resetStyle(e.target);
+// }
+
+// function onEachFeature(feature, layer) {
+//   layer.on({
+//       mouseover: highlightFeature,
+//       mouseout: resetHighlight
+//   });
+// }
+
+// geojson = L.geoJson(boundaries, {
+//   style: styleBound,
+//   onEachFeature: onEachFeature
+// }).addTo(map);
+
+// // Info layer- hover over info box rather than popup
+// var info = L.control();
+
+// info.onAdd = function (map) {
+//     this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+//     this.update();
+//     return this._div;
+// };
+
+// // method that we will use to update the control based on feature properties passed
+// info.update = function (props) {
+//   this._div.innerHTML = '<h4>Earthquake</h4>' +  (props ?
+//       '<b>' + props.name + '</b><br />' + props.mag + 'Daily Global Earthquakes'
+//       : 'Hover over a point');
+// };
+
+// info.addTo(map);
+
+// function highlightFeature(e) {
+//   info.update(layer.feature.properties);
+// }
+
+// function resetHighlight(e) {
+//   info.update();
+// }
+
+
+// this function style boundaries
+function styleBound() {
+  return {
+      fillColor: 'grey',
+      weight: 2,
+      opacity: .5,
+      color: 'white',
+      dashArray: '3',
+      fillOpacity: 0.7
+  };
+}
+
+
+
+// This function styles each feature
+function stylePoint(feature) {
+  var scale = 1.7;
+  var mag = feature.properties.mag;
+  
+  return {
+      color: 'white',
+      weight: .5,
+      fillColor: getColor(mag),
+      fillOpacity: .6,
+      radius: mag * scale 
+  };
+}
+
+// Pop-up box for earthquak information
+function popupBox(earthquake) {
+  var properties = earthquake.feature.properties;
+  let date = new Date(properties.time);
+  return `<strong>Magnitude: ${properties.mag}</strong><br><a href="${properties.url}">${properties.place}</a><br>${date.toUTCString()}`;
+}
+
+var legend;
 // Create function to make legend layer
-function legendLayer() {
+function mapLegend() {
   let legend = L.control({position: 'bottomright'});
 
   legend.onAdd = function(map) {
@@ -70,51 +145,102 @@ function legendLayer() {
   };
   return legend;
 }
+// variable for earthquake- returned by earthquake function
+var earthquakes;
 
-// This function styles each feature
-function stylePoint(feature) {
-  var scale = 1.7;
-  var mag = feature.properties.mag;
+function mapEarthquakes(data){
+  // add geoJSON feature for earthquake lat/lng
+  earthquakes = 
+  L.geoJSON(geoData, {
+    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng,stylePoint(feature))},
+    }).addTo(map).bindPopup(popupBox).addTo(map);
   
-  return {
-      color: 'white',
-      weight: .5,
-      fillColor: getColor(mag),
-      fillOpacity: .6,
-      radius: mag * scale 
-  };
+  // call legend
+  mapLegend();
+
 }
 
-// function creates map with earthquake markers wtih provided GeoJSON object
-function createMap(geoData) {
-  // Create the tile layer that will be the background of our map
-  var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}", {
-    attribution: "Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"http://mapbox.com\">Mapbox</a>",
-    maxZoom: 18,
-    id: "mapbox/light-v10",
-    accessToken: API_KEY
-  });
+// function to make additional maptiles
+function mapTiles(){
+  var tiles=[
+    ['Outdoors','mapbox/outdoors-v11', 'green'],
+    ['Satellite','mapbox/satellite-v9', 'orange']
+  ];
+  var baseMaps={};
+  tiles.forEach(tile=> {
+    var name = tile[0];
+    var id= tile[1];
+    var lineColour = tile[2];
+
+    var tileLayer= L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+      attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+      maxZoom: 18,
+      id: id,
+      accessToken: API_KEY
+      });
+  
+    baseMaps[name] = tileLayer;
+     // change boundary colour depending on selected basemap
+    tileLayer.on({
+    add: e => { faultLines.setStyle({color: flColor}) }
+  })
+  })
+
+  return baseMaps;
+
+}
+// function combines all tiles 
+function mapMap() {
+  // Create the map object with layers
+  var baseMaps = mapTiles();
+
+  var overlayMaps = {
+    'Techtonic Plates': boundaries,
+    'Earthquakes' : earthquakes
+  };
 
   // Create the map object with layers
   var map = L.map("map", {
     center: [30,-15],
     zoom: 2,
     maxZoom: 18,
-    tileSize: 512});
+    tileSize: 512,
+    layers: [boundaries, earthquakes, Object.values(baseMaps)[0] ]
+    });
 
-  // Add lightmap to main map
-  lightmap.addTo(map);
-
-  // add geoJSON feature L.geoJSON(geojsonFeature).addTo(map)
-  L.geoJSON(geoData, {
-    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng,stylePoint(feature))},
-    }).addTo(map).bindPopup(popupBox).addTo(map);
-  
   //add legend function to map
-  legendLayer().addTo(map);
+  legend.addTo(map);
+
+  L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+    
+    // Add interactivity: show/hide the legend with earthquakes layer
+    earthquakes.on({
+        add: e => { legend.addTo(map) },
+        remove: e => { legend.remove() }
+    });
   }
 
 var url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
-
+var BoundJson="PB2002_boundaries.json"
 // Perform an API call to the earthquake API and call createmap function
-d3.json(url,createMap)
+d3.json(url,mapMap)
+
+
+
+d3.json(BoundJson, function(data) {
+  return data;
+}) // First:loading tectonic boundaries data
+   .then(function(data) {
+     console.log(data)});
+  //  } => {
+  //      mapBoundaries(data);
+  //      return d3.json(url); // Second: loading earthquakes data
+  //  })
+  //  .then(data => {
+  //      mapEarthquakes(data);
+  //      createMap();
+  //  })
+  //  .catch(error => {
+  //      console.log(error);
+  //      alert(error);
+  //  });
