@@ -39,20 +39,20 @@ function legendLayer() {
   };
   return legend;
 }
+
 // This function styles each feature
 function stylePoint(feature) {
-  var scale = 4;
+  var scale = 2;
   var mag = feature.properties.mag;
   
   return {
       color: 'white',
-      weight: 1,
+      weight: .5,
       fillColor: getColor(mag),
-      fillOpacity: 1.0,
+      fillOpacity: .7,
       radius: mag * scale
   };
 }
-
 
 // function creates map with earthquake markers wtih provided GeoJSON object
 function createMap(geoData) {
@@ -74,67 +74,15 @@ function createMap(geoData) {
   // Add lightmap to main map
   lightmap.addTo(map);
 
-  
-
-
-  // var geojsonMarkerOptions = {
-  //   radius: 8,
-  //   fillColor: getColor(geoData.properties.mag),
-  //   color: "#000",
-  //   weight: 1,
-  //   opacity: 1,
-  //   fillOpacity: 0.8
-  // };
-
   // add geoJSON feature L.geoJSON(geojsonFeature).addTo(map)
   L.geoJSON(geoData, {
-    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng,stylePoint)
-    .addTo(map)
-    .bindPopup(popupBox, { className: 'popup' }).addTo(map);
+    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng,stylePoint(feature))},
+    }).addTo(map).bindPopup(popupBox, { className: 'popup' }).addTo(map);
   
   //add legend function to map
   legendLayer().addTo(map);
-  }}
+  }
 
-//
-// }
-// Perform an API call to the earthquake with d3
-// d3.json(geoData, function(data) {
-//   createFeatures(data.features);
-
-//   // Pull the "features" property from data
-//   var earthQuake = data.features;
-//   console.log(earthQuake);
-//   // from features get relavent info from geoJSON
-//   earthQuake.forEach(quake => {
-//     var mag = quake.properties.mag;
-//     var magType = quake.properties.magType;
-//     var coordinates = quake.geometry.coordinates;
-//     var place =quake.properties.place;
-//     console.log(mag);
-//     console.log(magType);
-//     console.log(coordinates);
-//     console.log(place);
-//   });
-  
-
-// });
-
-// function createFeatures(earthquakeData){
-//   // Define a function we want to run once for each feature in the features array
-//   // Give each feature a popup describing the place and time of the earthquake
-//   function onEachFeature(feature, layer) {
-//     layer.bindPopup("<h3>" + feature.properties.place +
-//       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
-//   }
-//   // Create a GeoJSON layer containing the features array on the earthquakeData object
-//   // Run the onEachFeature function once for each piece of data in the array
-//   var earthquakes = L.geoJSON(earthquakeData, {
-//     onEachFeature: onEachFeature
-//   });
-//   // Sending our earthquakes layer to the createMap function
-//   createMap(earthquakes);
-// }
 var url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
 // Perform an API call to the earthquake API and call createmap function
 // d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson", createMap);
