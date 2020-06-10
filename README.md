@@ -1,5 +1,6 @@
 # Unit 17 - Leaflet.js
 [Level 1](https://leahlindy.github.io/leaflet-challenge/Level-1-basic_viz/)
+<br>
 [Level 2](https://leahlindy.github.io/leaflet-challenge/Level-2-techtonic_plates/)
 ## Objectives
 
