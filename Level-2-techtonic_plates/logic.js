@@ -15,6 +15,11 @@ function mapBoundaries(data){
         weight: 2
     }
   });
+
+  styleBound()
+
+  return boundaries
+
 }
 
 // getColor function will get colours for graded magnitudes (1- 5+) - colorbrewer
@@ -150,87 +155,69 @@ var earthquakes;
 
 function mapEarthquakes(data){
   // add geoJSON feature for earthquake lat/lng
-  earthquakes = 
+  
   L.geoJSON(geoData, {
-    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng,stylePoint(feature))},
-    }).addTo(map).bindPopup(popupBox).addTo(map);
+    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng) },
+    style: stylePoint(feature),
+    }).bindPopup(popupBox);
   
   // call legend
   mapLegend();
 
 }
 
-// // function to make additional maptiles
-// function mapTiles(){
-//   var tiles=[
-//     ['Outdoors','mapbox/outdoors-v11', 'green'],
-//     ['Satellite','mapbox/satellite-v9', 'orange']
-//   ];
-//   var baseMaps={};
-//   tiles.forEach(tile=> {
-//     var name = tile[0];
-//     var id= tile[1];
-//     var lineColour = tile[2];
+// function to make additional maptiles
 
-//     var tileLayer= L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-//       attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-//       maxZoom: 18,
-//       id: id,
-//       accessToken: API_KEY
-//       });
-  
-//     baseMaps[name] = tileLayer;
-//      // change boundary colour depending on selected basemap
-//     tileLayer.on({
-//     add: e => { faultLines.setStyle({color: flColor}) }
-//   })
-//   })
-
-//   return baseMaps;
-
-// }
 // function combines all tiles 
-function mapMap(data) {
-  // Create the map object with layers
-  // var baseMaps = mapTiles();
-  
+function mapMap(geoData) {
+  d3.json("PB2002_boundaries.json",mapBoundaries);
+
   var overlayMaps = {
     'Techtonic Plates': boundaries,
     'Earthquakes' : earthquakes
   };
-  
+  // Create the tile layer that will be the background of our map
+  var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"http://mapbox.com\">Mapbox</a>",
+    maxZoom: 18,
+    id: "mapbox/light-v10",
+    accessToken: API_KEY
+  });
+
   // Create the map object with layers
   var map = L.map("map", {
     center: [30,-15],
     zoom: 2,
     maxZoom: 18,
-    layers: [boundaries, earthquakes ]
-    });
+    tileSize: 512});
 
-    var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}", {
-      attribution: "Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"http://mapbox.com\">Mapbox</a>",
-      maxZoom: 18,
-      id: "mapbox/light-v10",
-      accessToken: API_KEY
-    }).addTo(map);
-  //add legend function to map
-  legend.addTo(map);
+  // Add lightmap to main map
+  lightmap.addTo(map);
 
-  L.control.layers(lightmap, overlayMaps, { collapsed: false }).addTo(map);
+  // add geoJSON feature L.geoJSON(geojsonFeature).addTo(map)
+  L.geoJSON(geoData, {
+    pointToLayer: (feature, latlng) => { return L.circleMarker(latlng,stylePoint(feature))},
+    }).addTo(map).bindPopup(popupBox).addTo(map);
+  
     
     // Add interactivity: show/hide the legend with earthquakes layer
-    earthquakes.on({
-        add: e => { legend.addTo(map) },
-        remove: e => { legend.remove() }
-    });
+    // earthquakes.on({
+    //     add: e => { legend.addTo(map) },
+    //     remove: e => { legend.remove() }
+    // });
 
-    // d3.json("PB2002_boundaries.json",mapBoundaries);
     
+  //add legend function to map
+  mapLegend().addTo(map);
   }
+  
+  
+  // Create the map object with layers
+  
+  
+  
 
 var url="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
 var BoundJson="PB2002_boundaries.json"
 
-d3.json(url, (data) => 
-{ mapMap(data); d3.json(boundJSON, 
-  (boundaries) => { mapBoundaries(boundaries)})});
+d3.json(url,mapMap)
