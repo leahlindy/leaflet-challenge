@@ -1,8 +1,7 @@
 # Unit 17 - Leaflet.js
 [Level 1](https://leahlindy.github.io/leaflet-challenge/Level-1-basic_viz/)
 <br>
-[Level 2](https://leahlindy.github.io/leaflet-challenge/Level-2-techtonic_plates/)
-## Objectives
+
 
 * Understand the benefits that visualizing data with maps can provide.
 * Learn the basics of creating maps and plotting data with the Leaflet.js library.
